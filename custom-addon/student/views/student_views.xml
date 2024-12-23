@@ -1,0 +1,58 @@
+<odoo>
+  <!-- it will automatically convert it into html file  -->
+
+  <!-- this is tree view  -->
+  <record id="student_tree_view" model="ir.ui.view"> <!-- using record for any kind of view or action is cumpolsory | id should be always uniqe for any module in this case student | model should always follow ir.ui.view we can use this attribute to create diffrent views just like in module to create diffrent model(tables)-->
+  <!-- The term ir.ui.view in Odoo refers to a model (or table) in the Odoo database that is specifically used to define views for how data should be displayed to the user. The name ir.ui.view stands for "Interface Resources - User Interface View." -->
+    <field name="name">student.tree.view</field>
+    <field name="model">student</field>
+    <field name="arch" type="xml">
+    <!-- treee must always inside an arch -->
+      <tree>
+        <field name="name" string="Student Name"/> <!-- these both came form the models of this module -->
+        <field name="age" string="Age"/>
+      </tree>
+    </field>
+  </record>
+
+  <!-- this is form view  -->
+  <record id="student_form_view" model="ir.ui.view"> <!-- using record for any kind of view or action is cumpolsory | id should be always uniqe for any module in this case student | model should always follow ir.ui.view we can use this attribute to create diffrent views just like in module to create diffrent model(tables)-->
+    <field name="name">student.form.view</field>
+    <field name="model">student</field>
+    <field name="arch" type="xml">
+    <!-- form must always inside an arch -->
+      <form>
+        <field name="first_name" /> <!-- these both came form the models of this module -->
+        <field name="last_name" /> 
+        <field name="occupation" />
+        <field name="net_worth" /> 
+      </form>
+    </field>
+  </record>
+
+
+  <!-- action for a main menu of odoo to navigate to this module   -->
+  <record id="student_action" model="ir.actions.act_window"> <!-- using record for any kind of view or action is cumpolsory | id should be always uniqe for any module in this case student | model should always follow ir.ui.view we can use this attribute to create diffrent views just like in module to create diffrent model(tables)-->
+    <field name="name">Students</field>
+    <field name="student">student</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- main menu -->
+  <!-- no need to use action for the main menu -->
+  <!-- Main Menu -->
+  <menuitem id="student_menu" 
+            name="student"
+            sequence="1"
+  />
+  <menuitem id="student_child" 
+            parent="student_menu"
+            name="student_child"
+            action="student_action"
+            sequence="2" 
+  />
+  <!-- <menuitem id="student_list" 
+            parent="student_child"
+            name="student_list" 
+  /> -->
+</odoo>

@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- list view -->
+    <record id="estate_property_tree_view" model="ir.ui.view">
+        <field name="name">estate.property.tree.view</field>
+        <field name="model">estate.property</field>
+        <field name="arch" type="xml">
+            <list string="Estate Property List">
+                <field name="name"/>
+                <field name="tag_ids"/>
+                <field name="description"/>
+                <field name="postcode"/>
+                <field name="date_availablility"/>
+                <field name="expected_price"/>
+                <field name="selling_price"/>
+                <field name="bedroom"/>
+                <field name="living_area"/>
+                <field name="facades"/>
+                <field name="garage"/>
+                <field name="garden"/>
+                <field name="garden_area"/>
+                <field name="garden_orientation"/>
+                <field name="active"/>
+                <field name="state"/>
+                <field name="property_type_id"/>
+                <field name="buyer_id"/>
+                <field name="seller_id"/>
+            </list>
+        </field>
+    </record>
+    <!-- /list view -->
+
+    <!-- form view -->
+    <record id="estate_property_form_view" model="ir.ui.view">
+        <field name="name">estate.property.form.view</field>
+        <field name="model">estate.property</field>
+        <field name="arch" type="xml">
+            <form string="Property">
+                <sheet>
+                    <h1>
+                        <field name="name" placeholder="Enter property name here"/>
+                    </h1>
+                    <!-- many2many_tags: This is a specialized widget designed for displaying and managing tags. -->
+                    <field name="tag_ids" widget="many2many_tags" string="Tags" options="{'no_create_edit': False}" context="{'create': True}" 
+                            help="Select or create tags for this property"/>
+                    <group>
+                        <group>
+                            <field name="property_type_id" string="Property Type"/>
+                            <field name="postcode"/>
+                            <field name="date_availablility"/>
+                        </group>
+                        <group>
+                            <field name="expected_price"/>
+                            <field name="selling_price"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description">
+                            <group>
+                                <!-- <field name="description" readonly="1" options="{'no_open': True}"/> -->
+                                <field name="description"/>
+                                <field name="bedroom"/>
+                                <field name="living_area"/>
+                                <field name="facades"/>
+                                <field name="garage"/>
+                                <field name="garden"/>
+                                <field name="garden_area"/>
+                                <field name="garden_orientation"/>
+                                <field name="state" string="State"/>
+                            </group>
+                        </page>
+                        <page string="Other">
+                            <group>
+                                <field name="buyer_id" string="Buyer"/>
+                                <field name="seller_id" string="Seller"/>
+                            </group>
+                        </page>
+                        <page string="Offers">
+                            <group>
+                                <field name="offer_ids" nolabel="1">
+                                    <list string="Property Offers" editable="bottom">
+                                        <field name="price"/>
+                                        <field name="partner_id"/>
+                                        <field name="status"/>
+                                    </list>
+                                    <form>
+                                        <group>
+                                            <field name="price"/>
+                                            <field name="partner_id"/>
+                                            <field name="status"/>
+                                        </group>
+                                    </form>
+                                </field>
+                            </group>
+                        </page>
+                    
+                    </notebook>
+                </sheet>
+            </form>
+        </field>        
+    </record>
+    <!-- /form view -->
+
+    <!-- search view -->
+    <record id="estate_property_search_view" model="ir.ui.view">
+        <field name="name">estate.property.search.view</field>
+        <field name="model">estate.property</field>
+        <field name="arch" type="xml">
+            <!-- search filter -->
+            <search string="Property Search">
+                <field name="name" string="Title"/>
+                <field name="postcode" string="Postcode"/>
+                <field name="expected_price" string="Expected Price"/>
+                <field name="bedroom" string="Bedrooms"/>
+                <field name="living_area" string="Living Area(sqm)"/>
+                <field name="facades" string="Facades"/>
+                <field name="property_type_id" string="Property Type"/>
+                <!-- filter for available property-->
+                <filter 
+                name="available_properties"
+                string="Available Properties"
+                domain="[('state','in', ['new','offer received'])]"
+                />
+
+                <!-- name: Unique identifier for the filter -->
+                <!-- string: Text displayed in the UI -->
+                <!-- domain: Defines which records to show -->
+                <!-- 
+                Domains in Odoo:
+                    A way to filter records
+                    Written as a list of tuples
+                    ('field', 'operator',    value)
+                    Common operators: =, !=, in, not in
+                 -->
+                <group expand="1" string="Group By">
+                    <filter
+                        name="postcode"
+                        string="Postcode"
+                        context="{'group_by': 'postcode'}"
+                    />
+                    <filter
+                        name="garden"
+                        string="With Garden"
+                        context="{'group_by': 'garden'}"
+                    />
+                    <filter
+                        name="garage"
+                        string="With Garage"
+                        context="{'group_by': 'garage'}"
+                    />
+                </group>
+                <!-- /filter for available property-->
+            </search>
+            <!-- /search filter -->
+        </field>
+    </record>
+    <!-- /search view -->
+<!-- estate property tags -->
+    <!-- list view -->
+    <record id="estate_property_tag_view" model="ir.ui.view">
+        <field name="name">estate.property.tag.list.view</field>
+        <field name="model">estate.property.tag</field>
+        <field name="arch" type="xml">
+            <list string="Property List">
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+    <!-- /list view -->
+<!-- /estate property tags -->
+
+
+<!-- estate property offer view -->
+    <!-- list view -->
+    <record id="view_estate_property_offer_tree" model="ir.ui.view">
+        <field name="name">estate.property.offer.tree</field>
+        <field name="model">estate.property.offer</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="price"/>
+                <field name="partner_id"/>
+                <field name="status"/>
+            </list>
+        </field>
+    </record>
+    <!-- /list view -->
+
+    <!-- Form View -->
+    <record id="view_estate_property_offer_form" model="ir.ui.view">
+        <field name="name">estate.property.offer.form</field>
+        <field name="model">estate.property.offer</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="price"/>
+                        <field name="partner_id"/>
+                        <field name="status"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <!-- /Form View -->
+<!-- /estate property offer view -->
+</odoo>
