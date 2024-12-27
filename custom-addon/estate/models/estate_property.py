@@ -124,7 +124,7 @@ class EstatePropertyOffer(models.Model):
         string="Property"
     )
     # compute and inverse fields 
-    @api.depends('validity', 'create_date')
+    @api.depends('date_deadline','validity', 'create_date')
     def _compute_date_deadline(self):
         print("=== COMPUTE DATE DEADLINE STARTED ===")
         for record in self:
@@ -150,11 +150,11 @@ class EstatePropertyOffer(models.Model):
                 record.validity = 7  # Default validity if no date_deadline set
         print("=== INVERSE DATE DEADLINE ENDED ===")
 
-    @api.onchange('date_deadline')
-    def _onchange_date_deadline(self):
-        for record in self:
-            if record.create_date and record.date_deadline:
-                delta = (record.date_deadline - record.create_date.date()).days
-                record.validity = delta
-            else:
-                record.validity = 7  # Default validity if no date_deadline set
+    # @api.onchange('date_deadline')
+    # def _onchange_date_deadline(self):
+    #     for record in self:
+    #         if record.create_date and record.date_deadline:
+    #             delta = (record.date_deadline - record.create_date.date()).days
+    #             record.validity = delta
+    #         else:
+    #             record.validity = 7  # Default validity if no date_deadline set
