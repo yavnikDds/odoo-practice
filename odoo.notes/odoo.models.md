@@ -1,0 +1,5 @@
+- any character of the name of the model can not be in capital 
+- Odoo's ORM abstracts away many of the low-level database operations, making it easier to work with data.
+- The _name attribute is crucial for defining the database table name.
+- The fields defined in the model directly map to the columns in the database table.
+- Odoo handles the creation, modification, and deletion of database tables automatically.
