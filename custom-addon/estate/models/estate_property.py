@@ -1,8 +1,8 @@
 from odoo import models, fields,api
 from dateutil.relativedelta import relativedelta
 from datetime import date, timedelta
-import logging
-_logger = logging.getLogger(__name__)
+# import logging
+# _logger = logging.getLogger(__name__)
 class EstateProperty(models.Model):
     _name = 'estate.property'
     _description = 'Estate Property contain all the information related to the about property like advertisment '
@@ -60,13 +60,13 @@ class EstateProperty(models.Model):
     # methods
     @api.depends("living_area", "garden_area")
     def _compute_total_area(self):
-        print("total_area compute")
+        print("_compute_total_area")
         for record in self:
             record.total_area=(record.living_area or 0) + (record.garden_area or 0)
     
     @api.depends('offer_ids.price') # Add 'price' to track changes in related offers
     def _compute_best_offer(self):
-        print("total_area inveres")
+        print("_compute_best_offer")
         for record in self:
              # Get the highest price among related offers
             if record.offer_ids:
@@ -91,9 +91,14 @@ class EstatePropertyOffer(models.Model):
     price = fields.Float(string='Price', required=True)
 
     # compute and inverse fields 
-    validity = fields.Integer(default=7, compute='_compute_validity', readonly=False)
-    date_deadline = fields.Date(compute='_compute_date_deadline', store=True, readonly=False) #,store=True
-    create_date=fields.Datetime(default=fields.Datetime.now, readonly=True)
+    create_date = fields.Datetime('Creation Date', default=lambda self: fields.Datetime.now())
+    validity = fields.Integer(string="Validity (days)", default=7)
+    date_deadline = fields.Date(
+        string ="Deadline",
+        compute ='_compute_date_deadline',
+        inverse ='_inverse_date_deadline',
+        store=True
+    )
 
     status = fields.Selection(
         selection=[
@@ -121,37 +126,35 @@ class EstatePropertyOffer(models.Model):
     # compute and inverse fields 
     @api.depends('validity', 'create_date')
     def _compute_date_deadline(self):
-        # _logger.info("=== COMPUTE DATE DEADLINE STARTED ===")
+        print("=== COMPUTE DATE DEADLINE STARTED ===")
         for record in self:
-            # _logger.info(f"Computing for record ID: {record.id}")
-            # _logger.info(f"Current values - Validity: {record.validity}, Create Date: {record.create_date}")
+            print(f"Computing for record ID: {record.id}")
+            print(f"Current values - Validity: {record.validity}, Create Date: {record.create_date}")
             if record.create_date:
                 record.date_deadline = record.create_date.date() + timedelta(days=record.validity)
             else:
                 record.date_deadline = False
-        # _logger.info("=== COMPUTE DATE DEADLINE ENDED ===")
+        print("=== COMPUTE DATE DEADLINE ENDED ===")
 
-    # def _inverse_date_deadline(self):
-    #     for record in self:
-    #         if record.create_date and record.date_deadline:
-    #             delta = (record.date_deadline - record.create_date.date()).days
-    #             record.validity = delta
-    #         else:
-    #             record.validity = 0
-
-
-# the inveres function did not work that is why i have used the compute fucntion but it two times hard work
-    @api.depends('date_deadline', 'create_date')
-    def _compute_validity(self):
-        print("=== COMPUTE VALIDITY STARTED ===")
+    def _inverse_date_deadline(self):
+        print("=== INVERSE DATE DEADLINE STARTED ===")
         for record in self:
-            print(f"Validity Computing for record ID: {record.id}")
-            print(f"Current values - Validity: {record.date_deadline}, Create Date: {record.create_date}")
-            if record.create_date and record.date_deadline :
-                print("if")
+            print(f"Inverse computing for record ID: {record.id}")
+            if record.create_date and record.date_deadline:
+                print ("if in inverse deadline")
+                delta = (record.date_deadline - record.create_date.date()).days
+                print (f"the delta is {delta}")
+                record.validity = delta
+            else:
+                print ("else in inverse deadline")
+                record.validity = 7  # Default validity if no date_deadline set
+        print("=== INVERSE DATE DEADLINE ENDED ===")
+
+    @api.onchange('date_deadline')
+    def _onchange_date_deadline(self):
+        for record in self:
+            if record.create_date and record.date_deadline:
                 delta = (record.date_deadline - record.create_date.date()).days
                 record.validity = delta
             else:
-                print("else")
-                record.date_deadline = False
-        print("=== COMPUTE VALIDITY ENDED ===")
+                record.validity = 7  # Default validity if no date_deadline set
