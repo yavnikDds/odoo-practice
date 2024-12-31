@@ -64,3 +64,11 @@ for model debuigging, in this case it is compute and inverse
 - put them at each junction and condition to see the flow of the code
 you can also use '_logger.info("=== COMPUTE DATE DEADLINE STARTED ===")
 ' 
+
+if the behaviour of the odoo is not as expected consider performing these steps to ensure proper functionality.
+- restart browser
+- restart vs code
+- remove data of the odoo site
+- start a developer mode in odoo
+
+if somthing is not working as expected and is not showing error meaning it is a bug then, carefully see which factors are involved in the code fucntionality and try tweking them all.

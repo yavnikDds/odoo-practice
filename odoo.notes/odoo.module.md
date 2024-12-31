@@ -675,12 +675,14 @@ Exercise -
     -     `@api.depends("living_area", "garden_area")`   # mention the depends fields
           `def _compute_total_area(self):` #def function name with self as a parameter
           `for record in self:` # run a loop for self with the allies for single record and get the values of that single record
+          running loop is neccessary because, this is how odoo works, the odoo doesn't track single record it will store or update every record each time any record with computed functions gets updated
           `record.total_area=(record.living_area or 0) + (record.garden_area or 0)` # no need to return the, the odoo will automatically return the value.
 
 Exercise -
     Compute the best offer.
     - Add the best_price field to estate.property. It is defined as the highest (i.e. maximum) of the offers’ price.
     - Add the field to the form view as depicted in the first image of this section’s Goal.
+<!-- ----------------------------------------------------- date : 27-12-2024 -->
 
 ⚒️ - @api.depends('offer_ids.price') 
     The @api.depends decorator informs Odoo's ORM about the dependencies of a computed field.
@@ -697,8 +699,8 @@ Inverse Function
 - we can define a validity duration for an offer and set a validity date.
 
 Exercise
-    Compute a validity date for offers.
 
+    Compute a validity date for offers.
     - Add the following fields to the estate.property.offer model:
     Field           Type            Default
     validity        Integer         7
@@ -707,6 +709,181 @@ Exercise
     Where date_deadline is a computed field which is defined as the sum of two fields from the offer: the create_date and the validity. Define an appropriate inverse function so that the user can set either the date or the validity.
     Tip: the create_date is only filled in when the record is created, therefore you will need a fallback to prevent crashing at time of creation.
     - Add the fields in the form view and the list view as depicted on the second image of this section’s Goal.
+
+⚒️ -  to here a brefe explaination of the code 
+        @api.depends('validity', 'create_date')
+            - it indicate that the it will look for the changes in following fields and depends on those for calculating the value of our main field
+        def _compute_date_deadline(self):
+            - this function will run when the changes in the depends fields will occure
+        for record in self:
+            - its neccessary to use for loop for interating trough records-set in compute and inverse fields
+        record.date_deadline = record.create_date.date() + timedelta(days=record.validity)
+            we always have to return the value like this using record which is alies for the currently iterated variable and the field name 
+
+- Computed fields are not stored in the database by default. Therefore it is not possible to search on a computed field unless a search method is defined.
+- we can store the field with the store=True attribute. 
+- computed field can depend on another computed field.
+- Always take some time to evaluate the cost of a computed field beforehand. Most of the time it is only when your code reaches a production server that you realize it slows down a whole process. Not cool
+
+Onchanges
+
+Goal: at the end of this section, enabling the garden will set a default area of 10 and an orientation to North.
+
+- we also want to help the user with data entry.
+- When the ‘garden’ field is set, we want to give a default value for the garden area as well as the orientation.
+- In this case, the value of a given field modifies the value of other fields.
+- The ‘onchange’ mechanism provides a way for the client interface to update a form without saving anything to the database
+    - define a method where self represents the record in the form view
+    - decorate it with onchange() to specify which field it is triggered by.
+- In this example, changing the partner will also change the name and the description values.
+- we do not loop on self, this is because the method is only triggered in a form view, where self is always a single record.
+
+    Exercise
+        - Set values for garden area and orientation.
+        - Create an onchange in the estate.property model in order to set values for the garden area (10) and orientation (North) when garden is set to True. When unset, clear the fields.
+⚒️ - used below code, reffrenced from the example.
+        - @api.onchange('garden') # this will set garden field for monitoring for change
+        - def onchange_garden(self): # this will define the onchange function
+        - self.garden_area = 0 # this will set the value 
+          self.garden_orientation = '' # this will set the value 
+        - <field name="garden_area" readonly="not garden"/> # not garden will set readonly true, when garden is false 
+
+- Always prefer computed fields since they are also triggered outside of the context of a form view.
+- Never ever use an onchange to add business logic to your model. they are only triggered in the form view.
+- When using stored computed fields, pay close attention to the dependencies.
+- When computed fields depend on other computed fields, changing a value can trigger a large number of recomputations. This leads to poor performance.
+
+Chapter 9: Ready For Some Action?
+
+- In any real business scenario, we would want to link some business logic to action buttons. In our real estate example, we would like to be able to:
+    - cancel or set a property as sold
+    - accept or refuse an offer
+
+Object Type
+
+- Goal: at the end of this section:
+    - You should be able to cancel or set a property as sold:
+    A cancelled property cannot be sold and a sold property cannot be cancelled. For the sake of clarity, the state field has been added on the view.
+        - You should be able to accept or refuse an offer:
+        - Once an offer is accepted, the selling price and the buyer should be set:
+    - In our real estate module, we want to link business logic with some buttons. The most common way to do this is to:
+        - Add a button in the view, for example in the header of the view:
+        - and link this button to business logic:
+
+- The first important detail to note is that our method name isn’t prefixed with an underscore (_). This makes our method a public method, which can be called directly from the Odoo interface (through an RPC call). 
+- You should always define your methods as private unless they need to be called from the user interface.
+- We loop on self. Always assume that a method can be called on multiple records; it’s better for reusability.
+- Finally, a public method should always return something so that it can be called through XML-RPC. When in doubt, just returnTrue.
+
+    Exercise
+        Cancel and set a property as sold.
+            - Add the buttons ‘Cancel’ and ‘Sold’ to the estate.property model. A cancelled property cannot be set as sold, and a sold property cannot be cancelled.
+              Refer to the first image of the Goal for the expected result.
+             Tip: in order to raise an error, you can use the UserError function. There are plenty of examples in the Odoo source code ;-
+            - Add the buttons ‘Accept’ and ‘Refuse’ to the estate.property.offer model.Refer to the second image of the Goal for the expected result.
+              Tip: to use an icon as a button, have a look at this example.
+            - When an offer is accepted, set the buyer and the selling price for the corresponding property.
+              Refer to the third image of the Goal for the expected result.
+              Pay attention: in real life only one offer can be accepted for a given property!
+
+- In the context of Odoo, XML-RPC is a way for external applications or systems to communicate with and control an Odoo instance. It allows you to:
+- #️⃣  ` <button name="action_set_won_rainbowman" string="Mark Won"
+                            type="object" class="oe_highlight"
+                            attrs="{'invisible': ['|','|', ('active','=',False), ('probability', '=', 100), ('type', '=', 'lead')]}"/>`
+- type: This attribute defines the type of button action. Here, it's set to object, which means clicking the button will trigger a Python function on the current Odoo record.
+
+- attrs: This attribute specifies additional properties of the button. Here, it defines an invisible condition using a complex expression:
+    - '|','|', ...: This indicates a logical OR operation between multiple conditions. Effectively, the button will be hidden if any of the following conditions are met:
+    - ('active','=',False): The record is not active (inactive records might be archived or hidden).
+    - ('probability', '=', 100): The "probability" field of the record has a value of 100 (likely indicating it's already considered won).
+    - ('type', '=', 'lead'): The record type is "lead" (the button might not be relevant for leads).
+
+- #️⃣  ` def action_set_won_rainbowman(self):
+        self.ensure_one()
+        self.action_set_won()
+
+        message = self._get_rainbowman_message()
+        if message:
+            return {
+                'effect': {
+                    'fadeout': 'slow',
+                    'message': message,
+                    'img_url': '/web/image/%s/%s/image_1024' % (self.team_id.user_id._name, self.team_id.user_id.id) if self.team_id.user_id.image_1024 else '/web/static/src/img/smile.svg',
+                    'type': 'rainbow_man',
+                }
+            }
+        return True`
+- self.ensure_one(): This line ensures that the function is only called on a single record at a time (important for consistency).
+- self.action_set_won(): This line likely calls another function named action_set_won on the current record. This function is probably responsible for marking the record as "won" by modifying specific fields or performing other actions.
+- message = self._get_rainbowman_message(): This line calls another function _get_rainbowman_message on the current record. This function might retrieve a custom message to be displayed to the user.
+- if message:: This line checks if a message was retrieved from the previous function
+- return { ... }: If a message exists, it creates a dictionary object defining a notification for the user.
+- effect: Defines animation effects for the notification (here, fade-out effect with a slight delay).
+- message: Sets the content of the notification text with the retrieved message.
+- img_url: Defines the image URL to be displayed with the message.
+    - It attempts to use the profile picture of the user associated with the team assigned to the record (if available).
+    - If the user's profile picture is not found, it defaults to a generic smiley image.
+- type: Sets the notification type to "rainbow_man", likely triggering a specific visual style.
+- return True: If no message is retrieved or the if-condition doesn't apply, the function simply returns True.
+
+⚒️  # accept and refuse offer
+    def action_accept_offer(self):
+        print("=== ACTION ACCEPT OFFER ===")
+        if self.property_id.state in ('sold', 'cancelled'):
+            raise UserError(f"Error: This property is already {self.property_id.state} and cannot accept new offers.")
+        offers_to_refuse = self.env['estate.property.offer'].search([ # self.env: This refers to the current Odoo environment. It provides access to various functionalities and data within the Odoo system.'estate.property.offer' model name you want to search within.
+            # search: This is a method provided by the Odoo environment that allows you to search for records in a specific model.
+            # [ ... ]: This is a list that defines the search criteria.
+            ('property_id', '=', self.property_id.id),
+            # ('property_id', '=', self.property_id.id): This is a tuple with three elements:
+            # 'property_id': This represents the field name you want to filter by
+            # '=': This is the comparison operator. 
+            #  By accessing self.property_id.id, we get the ID of the property this current offer is associated with.
+            ('id', '!=', self.id),
+            #  By accessing self.property_id.id, we get the ID of the property this current offer is associated with.
+            # '!=': This is the comparison operator.
+            # self.id: This gets the ID of the current offer record (self).
+            # ('status', '=', 'pending'),
+            # ('status', '!=', 'accepted'),
+            # 'status': Represents the status field of the estate.property.offer model.
+            # This code searches for all estate.property.offer records that meet the criteria
+        ])
+        # print(f"Offers to refuse: {offers_to_refuse}")
+        for offer in offers_to_refuse:
+            offer.action_refuse_offer()
+        self.status = "accepted"
+        self.property_id.selling_price = self.price
+        self.property_id.buyer_id = self.partner_id
+
+        # self.property_id.state = 'offer_accepted'
+        # self.property_id.buyer_id = self.partner_id
+        # self.property_id.selling_price = self.price
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+         
+        
+
+
+
+
 
 
 
@@ -747,3 +924,4 @@ Exercise
 
 tips -
     - implemented the instruction without the reading whole thing, which lead to an error that i had to resolve mannually. so from now on read the whole thing, try to quickly understand it,apply it, if error comes up reread the whole thing, and after resolving the error and successfully running the program review every single thing in just few minutes 
+    - in python, object is same as a record in database,--data-- attribute is same as a field (column in database), --behavior-- functions are same as a methods

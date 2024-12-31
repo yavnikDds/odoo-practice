@@ -37,6 +37,13 @@
         <field name="model">estate.property</field>
         <field name="arch" type="xml">
             <form string="Property">
+                <!-- <sheet>
+                    
+                </sheet> -->
+                <header>
+                    <button name="action_set_sold_property" string="Sold" type="object" class="oe_highlight" />
+                    <button name="action_cancel_property" string="Cancel" type="object" class="btn-secondary" />
+                </header>
                 <sheet>
                     <h1>
                         <field name="name" placeholder="Enter property name here"/>
@@ -66,9 +73,9 @@
                                 <field name="facades"/>
                                 <field name="garage"/>
                                 <field name="garden"/>
-                                <field name="garden_area"/>
-                                <field name="garden_orientation"/>
-                                <field name="state" string="State"/>
+                                <field name="garden_area" readonly="not garden"/>
+                                <field name="garden_orientation" readonly="not garden"/>
+                                <field name="state" string="State" />
                                 <field name="total_area"/>
                             </group>
                         </page>
@@ -128,6 +135,12 @@
                 string="Available Properties"
                 domain="[('state','in', ['new','offer received'])]"
                 />
+                <filter 
+                name="sold_properties"
+                string="Inactive Properties"
+                domain="[('active','in', [False])]"
+                />
+
 
                 <!-- name: Unique identifier for the filter -->
                 <!-- string: Text displayed in the UI -->
@@ -188,6 +201,8 @@
                 <field name="validity"/>
                 <field name="date_deadline"/>
                 <field name="partner_id"/>
+                <button name="action_accept_offer" type="object" class="" icon="fa-check" />
+                <button name="action_refuse_offer" type="object" class="" icon="fa-times" />
                 <field name="status"/>
             </list>
         </field>

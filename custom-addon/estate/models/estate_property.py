@@ -1,6 +1,7 @@
 from odoo import models, fields,api
 from dateutil.relativedelta import relativedelta
 from datetime import date, timedelta
+from odoo.exceptions import UserError
 # import logging
 # _logger = logging.getLogger(__name__)
 class EstateProperty(models.Model):
@@ -54,10 +55,12 @@ class EstateProperty(models.Model):
     # others fields
     property_type_id = fields.Many2one(comodel_name='estate.property.types', string="Property Type", index=True)
     buyer_id = fields.Many2one('res.partner', string="Buyer")
-    seller_id = fields.Many2one('res.users', string="Seller")
+# Set seller to the current user by default (modification)
+    seller_id = fields.Many2one('res.users', string="Seller", default=lambda self: self.env.user.id, readonly=True)
+
     active = fields.Boolean(string="Active", default=True)  # Add the active field
 
-    # methods
+    # compute methods
     @api.depends("living_area", "garden_area")
     def _compute_total_area(self):
         print("_compute_total_area")
@@ -73,6 +76,39 @@ class EstateProperty(models.Model):
                 record.best_offer = max(record.offer_ids.mapped('price'))
             else:
                 record.best_offer = 0.0 # Default to 0 if no offers
+    
+    # onchange methods
+    @api.onchange('garden')
+    def onchange_garden(self):
+        if self.garden == False:
+            print("garden is false")
+            self.garden_area = 0
+            self.garden_orientation = ''
+        else:
+            print("garden is true")
+            self.garden_area = 100
+            self.garden_orientation = 'north'
+
+    # action methods
+    def action_set_sold_property(self):
+        if self.state == 'cancelled':
+            raise UserError("Cancelled properties cannot be sold directly. Please reactivate the property first")
+        if self.state == 'sold':
+            raise UserError("The property is already sold.")
+
+        self.state = 'sold'
+        self.active = False  # Comment out or remove this line to keep the property active
+
+    def action_cancel_property(self):
+        if self.state == 'sold':
+            raise UserError("Sold properties cannot be cancelled. Please set the property as available first")
+        if self.state == 'cancelled':
+            raise UserError("The property is already cancelled.")
+
+        self.state = 'cancelled'
+        self.active = False
+
+
 class EstatePropertyTypes(models.Model):
     _name = "estate.property.types"
     _description = "this model will contain all the information about the types and it is kind of settings for the estate model"
@@ -99,29 +135,54 @@ class EstatePropertyOffer(models.Model):
         inverse ='_inverse_date_deadline',
         store=True
     )
+    # accept and refuse offer
+    def action_accept_offer(self):
+        print("=== ACTION ACCEPT OFFER ===")
+        if self.property_id.state in ('sold', 'cancelled'):
+            raise UserError(f"Error: This property is already {self.property_id.state} and cannot accept new offers.")
+        offers_to_refuse = self.env['estate.property.offer'].search([
+            ('property_id', '=', self.property_id.id),
+            ('id', '!=', self.id),
+            ('status', '=', 'pending'),
+        ])
+        for offer in offers_to_refuse:
+            offer.action_refuse_offer()
+        self.status = "accepted"
+        self.property_id.selling_price = self.price
+        self.property_id.buyer_id = self.partner_id
+        # self.property_id.state = False
+        
+    def action_refuse_offer(self):
+        self.status = "refused"
+        print("=== ACTION REFUSE OFFER ===")
 
-    status = fields.Selection(
-        selection=[
-            ("accepted", "Accepted"),
-            ("refused", "Refused")
-        ],
-        copy=False
-    )
     partner_id = fields.Many2one(
         "res.partner",
         required=True,
         string="Partner"
     )
+
+    status = fields.Selection(
+        selection=[
+            ("accepted", "Accepted"),
+            ("refused", "Refused"),
+            ("pending", "Pending"),
+        ],
+        string="Status",
+        default="pending",
+        copy=False
+    )
+
     # Many2one field: each offer belongs to one property
     # When creating offer from property form view, Odoo automatically:
     # 1. Detects which property form we're in
     # 2. Sets this property_id field to link the offer to that specific property
     # 3. Maintains relationship without manual input
-
     property_id = fields.Many2one(
         "estate.property",
-        required=True,
-        string="Property"
+        string="Property",
+        ondelete='cascade',  # Delete offers if property is deleted
+        required=True
     )
     # compute and inverse fields 
     @api.depends('date_deadline','validity', 'create_date')

@@ -1,3 +1,5 @@
+officially started learniing python
+
 10/12/2024
 - watched few odoo-web tutorials and took quiz
 - learned commands for odoo CLI 
@@ -68,10 +70,22 @@ learned following things, following the official documentation
         - learned about its Inverse Function
     - learned about its Onchanges
     
-21/12/2024
+24/12/2024 - sick leave
+25/12/2024 - sick leave
+
+26/12/2024
+27/12/2024
 learned following things, following the official documentation
     - Object Type
     - Action Type
     - Constraints
         - learned about SQL
         - learned about Python
+28/12/2024 - picnic
+30/12/2024 - sunday
+30/12/2024
+learned following things, following the official documentation
+    - what is xml-rpc
+    - inheritance in Odoo
+    - learned about standard CRUD using Python inheritanc
+    - Delegation
